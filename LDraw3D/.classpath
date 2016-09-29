@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="it/romabrick/ldraw3d/ConnectionType.java|it/romabrick/ldraw3d/JSimpleGeom.java|it/romabrick/ldraw3d/Point3D.java|it/romabrick/ldraw3d/ConnTree.java|it/romabrick/ldraw3d/LDFlexEditor.java|it/romabrick/ldraw3d/LDModelEditor.java|bricksnspace/ldraw3d/LDModelEditor.java|bricksnspace/ldraw3d/ConnTree.java" kind="src" path="src"/>
+	<classpathentry excluding="bricksnspace/ldraw3d/ConnTree.java|bricksnspace/ldraw3d/LDModelEditor.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/LDrawLib"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JSimple3DGeom"/>
