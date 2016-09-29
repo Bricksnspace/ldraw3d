@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="it/romabrick/ldraw3d/ConnectionType.java|it/romabrick/ldraw3d/JSimpleGeom.java|it/romabrick/ldraw3d/Point3D.java|it/romabrick/ldraw3d/ConnTree.java|it/romabrick/ldraw3d/LDFlexEditor.java|it/romabrick/ldraw3d/LDModelEditor.java|bricksnspace/ldraw3d/LDModelEditor.java|bricksnspace/ldraw3d/ConnTree.java" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/LDrawLib"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JSimple3DGeom"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-android-armv6.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-linux-amd64.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-linux-armv6.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-linux-armv6hf.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-linux-i586.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-macosx-universal.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-windows-amd64.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-windows-i586.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-android-armv6.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-amd64.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-armv6.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-armv6hf.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-i586.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-macosx-universal.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-windows-amd64.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all-natives-windows-i586.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
