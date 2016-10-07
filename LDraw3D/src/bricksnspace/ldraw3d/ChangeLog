@@ -1,3 +1,7 @@
+2016-10-07  Mario Pascucci  <mpascucci@gmail.com>
+
+	* LDrawGLDisplay.java (getStaticImage): Added off-screen image generator
+
 2015-08-27  Mario Pascucci  <mpascucci@gmail.com>
 
 	* ConnectionHandler.java (resetTarget): added to clear last connection target for deleted parts

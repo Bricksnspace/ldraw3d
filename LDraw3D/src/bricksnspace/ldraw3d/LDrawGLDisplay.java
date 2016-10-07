@@ -45,9 +45,10 @@ import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
-import javax.media.opengl.GLDrawable;
+import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
+import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.glu.GLU;
@@ -69,7 +70,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	static { GLProfile.initSingleton(); }
 		
 	private GLCanvas canvas;
-	private GL2 gl2;
+	private GL2 currentGL2;
 	
 	private boolean wireframe = true;
 	private boolean polygon = true;
@@ -346,7 +347,10 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	
 	
 	
-	
+	/**
+	 * Rotate view around view X axis
+	 * @param anglex angle in degree
+	 */
 	public void rotateX(float anglex) {
 		viewMatrix = viewMatrix.rotateX((float)(anglex*Math.PI/180));
 		if (autoRedraw)
@@ -354,6 +358,10 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	}
 
 
+	/**
+	 * Rotate view around view Y axis
+	 * @param angley angle in degree
+	 */
 	public void rotateY(float angley) {
 		if (rotMode == ROT_LDD) {
 			Point3D o = new Point3D(viewMatrix.transformPoint(0, 0, 0));
@@ -554,7 +562,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	 *  
 	 * @param p gadget to add
 	 */
-	private void addGadgetVA(Gadget3D p) {
+	private void addGadgetVA(Gadget3D p, GL2 gl2) {
 		
 		int[] vboArrayNames = new int[2];
 
@@ -591,7 +599,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	 * GL context must be already set before call
 	 * @param p gadget to remove
 	 */
-	private void delGadgetVA(Gadget3D p) {
+	private void delGadgetVA(Gadget3D p, GL2 gl2) {
 		
 		if (p.getLineVertexCount() > 0) {
 			gl2.glDeleteBuffers(2, new int[] {p.getLineName(),p.getLineColorName()},0);
@@ -607,7 +615,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	 *  
 	 * @param p rendered part
 	 */
-	private void addRenderedPartVA(LDRenderedPart p) {
+	private void addRenderedPartVA(LDRenderedPart p, GL2 gl2) {
 		
 		int[] vboArrayNames = new int[2];
 
@@ -709,7 +717,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	 * GL context must be already set before call
 	 * @param p rendered part to remove
 	 */
-	private void delRenderedPartVA(LDRenderedPart p) {
+	private void delRenderedPartVA(LDRenderedPart p, GL2 gl2) {
 		
 		if (p.getLineVertexCount() > 0) {
 			gl2.glDeleteBuffers(2, new int[] {p.getLineName(),p.getLineColorName()},0);
@@ -735,14 +743,15 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	
 	
 	
-	private void render(GLDrawable drawable) {
+	private void renderScene(GL2 gl2, GLU glu, int width, int height) {
 
 		gl2.glMatrixMode(GL2.GL_PROJECTION);
         gl2.glLoadIdentity();  // Reset The Projection Matrix
         //
         //GLU glu = new GLU();
-        int width = drawable.getSurfaceWidth();
-        int height = drawable.getSurfaceHeight() == 0 ? 1 : drawable.getSurfaceHeight();
+        //int width = drawable.getSurfaceWidth();
+        //int height = drawable.getSurfaceHeight() == 0 ? 1 : drawable.getSurfaceHeight();
+        height = height == 0 ? 1 : height;
         if (perspective) {
         	glu.gluPerspective(40f, (float)width/height, 1f, 10000f);
         	glu.gluLookAt(0, 0, -800*zoomFactor, 0, 0, 0, 0, -1, 0);
@@ -762,7 +771,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
         	gl2.glEnable(GL2.GL_LINE_SMOOTH);
         	gl2.glHint(GL2.GL_LINE_SMOOTH_HINT, GL2.GL_FASTEST);
         }
-        gl2.glClearColor(0.90f, 0.90f, 0.90f, 1f);    // This Will Clear The Background Color
+        gl2.glClearColor(0.95f, 0.95f, 0.95f, 1f);    // This Will Clear The Background Color
         gl2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
         gl2.glColorMaterial( GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE );
         gl2.glDisable(GL2.GL_LIGHTING);
@@ -989,6 +998,57 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	
 	
 	
+	private void updateSceneObjects(GL2 gl2) {
+		
+        while (!gadgetAddQueue.isEmpty()) {
+        	QueueAction<Gadget3D> a = gadgetAddQueue.poll();
+        	if (a.action == QActions.ADD) {
+	        	//Gadget3D rm = gadgets.get(r.getId());
+	        	Gadget3D rm = gadgets.put(a.part.getId(),a.part);
+	        	if (rm != null) {
+	        		// remove old gadget
+	        		delGadgetVA(rm, gl2);
+	            	//System.out.println("Da:"+rm.getId());
+	        		//gadgets.remove(rm.getId());
+	        	}
+            	//System.out.println("A:"+a.part.getId());
+	        	addGadgetVA(a.part, gl2);
+        	}
+        	else {
+            	Gadget3D rm = gadgets.get(a.id);
+            	if (rm == null)
+            		continue;
+            	//System.out.println("D:"+a.id);
+            	delGadgetVA(rm, gl2);
+            	gadgets.remove(a.id);       		
+        	}
+        }
+        while (!partAddQueue.isEmpty()) {
+        	QueueAction<LDRenderedPart> a = partAddQueue.poll(); 
+    		// add to GL context
+        	if (a.action == QActions.ADD) {
+	    		//System.out.println("a:"+a.part.getId()); //XX
+	    		// add new part to model
+	    		LDRenderedPart r = model.put(a.part.getId(),a.part);
+	    		// if there was an old part with same id
+	    		if (r != null) {
+	    			// remove from GL context VA buffers
+	    			delRenderedPartVA(r, gl2);
+	    		}
+	    		addRenderedPartVA(a.part, gl2);
+        	}
+        	else {
+        		if (model.containsKey(a.id)) {
+        			//System.out.println("r:"+a.id);  //XX
+        			delRenderedPartVA(model.get(a.id), gl2);
+        			model.remove(a.id);
+        		}       		
+        	}
+        }
+
+	}
+	
+	
 	
 	@Override
 	public void display(GLAutoDrawable drawable) {
@@ -1013,54 +1073,55 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 //    			model.remove(r);
 //    		}
 //        }
-        while (!gadgetAddQueue.isEmpty()) {
-        	QueueAction<Gadget3D> a = gadgetAddQueue.poll();
-        	if (a.action == QActions.ADD) {
-	        	//Gadget3D rm = gadgets.get(r.getId());
-	        	Gadget3D rm = gadgets.put(a.part.getId(),a.part);
-	        	if (rm != null) {
-	        		// remove old gadget
-	        		delGadgetVA(rm);
-	            	//System.out.println("Da:"+rm.getId());
-	        		//gadgets.remove(rm.getId());
-	        	}
-            	//System.out.println("A:"+a.part.getId());
-	        	addGadgetVA(a.part);
-        	}
-        	else {
-            	Gadget3D rm = gadgets.get(a.id);
-            	if (rm == null)
-            		continue;
-            	//System.out.println("D:"+a.id);
-            	delGadgetVA(rm);
-            	gadgets.remove(a.id);       		
-        	}
-        }
-        while (!partAddQueue.isEmpty()) {
-        	QueueAction<LDRenderedPart> a = partAddQueue.poll(); 
-    		// add to GL context
-        	if (a.action == QActions.ADD) {
-	    		//System.out.println("a:"+r.getId());
-	    		// add new part to model
-	    		LDRenderedPart r = model.put(a.part.getId(),a.part);
-	    		// if there was an old part with same id
-	    		if (r != null) {
-	    			// remove from GL context VA buffers
-	    			delRenderedPartVA(r);
-	    		}
-	    		addRenderedPartVA(a.part);
-        	}
-        	else {
-        		if (model.containsKey(a.id)) {
-        			//System.out.println("r:"+r);
-        			delRenderedPartVA(model.get(a.id));
-        			model.remove(a.id);
-        		}       		
-        	}
-        }
+		updateSceneObjects(currentGL2);
+//        while (!gadgetAddQueue.isEmpty()) {
+//        	QueueAction<Gadget3D> a = gadgetAddQueue.poll();
+//        	if (a.action == QActions.ADD) {
+//	        	//Gadget3D rm = gadgets.get(r.getId());
+//	        	Gadget3D rm = gadgets.put(a.part.getId(),a.part);
+//	        	if (rm != null) {
+//	        		// remove old gadget
+//	        		delGadgetVA(rm);
+//	            	//System.out.println("Da:"+rm.getId());
+//	        		//gadgets.remove(rm.getId());
+//	        	}
+//            	//System.out.println("A:"+a.part.getId());
+//	        	addGadgetVA(a.part);
+//        	}
+//        	else {
+//            	Gadget3D rm = gadgets.get(a.id);
+//            	if (rm == null)
+//            		continue;
+//            	//System.out.println("D:"+a.id);
+//            	delGadgetVA(rm);
+//            	gadgets.remove(a.id);       		
+//        	}
+//        }
+//        while (!partAddQueue.isEmpty()) {
+//        	QueueAction<LDRenderedPart> a = partAddQueue.poll(); 
+//    		// add to GL context
+//        	if (a.action == QActions.ADD) {
+//	    		//System.out.println("a:"+r.getId());
+//	    		// add new part to model
+//	    		LDRenderedPart r = model.put(a.part.getId(),a.part);
+//	    		// if there was an old part with same id
+//	    		if (r != null) {
+//	    			// remove from GL context VA buffers
+//	    			delRenderedPartVA(r);
+//	    		}
+//	    		addRenderedPartVA(a.part);
+//        	}
+//        	else {
+//        		if (model.containsKey(a.id)) {
+//        			//System.out.println("r:"+r);
+//        			delRenderedPartVA(model.get(a.id));
+//        			model.remove(a.id);
+//        		}       		
+//        	}
+//        }
 
         // now render
-		render(drawable);
+		renderScene(currentGL2, glu, drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
         
 		// display it
         //canvas.swapBuffers();
@@ -1071,36 +1132,36 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
         	// do not draw gadgets and lines in this mode, so can't select
             if (bufferOk) {
             	// disable antialias and avoiding color color id  
-            	gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
-                gl2.glDisable(GL2.GL_MULTISAMPLE);
-                gl2.glClearColor(0, 0, 0, 255);    // background is solid black
+            	currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
+                currentGL2.glDisable(GL2.GL_MULTISAMPLE);
+                currentGL2.glClearColor(0, 0, 0, 255);    // background is solid black
             	
-            	gl2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
-	            gl2.glEnableClientState( GL2.GL_VERTEX_ARRAY );
+            	currentGL2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
+	            currentGL2.glEnableClientState( GL2.GL_VERTEX_ARRAY );
     	        for (LDRenderedPart p : model.values()) {
-    	        	gl2.glColor3ub(
+    	        	currentGL2.glColor3ub(
     	        			(byte)((p.getId()&0xff0000)>>16), 
     	        			(byte) ((p.getId()&0xff00)>>8), 
     	        			(byte)(p.getId()&0xff));
     	        	if (p.getTriangleVertexCount() > 0 && !p.isHidden()) {
-    		            gl2.glBindBuffer( GL2.GL_ARRAY_BUFFER, p.getTriangleName() );
-    		            gl2.glVertexPointer( 3, GL2.GL_FLOAT, 6 * Buffers.SIZEOF_FLOAT, 0 );
-    		            gl2.glDrawArrays( GL2.GL_TRIANGLES, 0, p.getTriangleVertexCount() );
-    		            gl2.glBindBuffer( GL2.GL_ARRAY_BUFFER, 0 );
+    		            currentGL2.glBindBuffer( GL2.GL_ARRAY_BUFFER, p.getTriangleName() );
+    		            currentGL2.glVertexPointer( 3, GL2.GL_FLOAT, 6 * Buffers.SIZEOF_FLOAT, 0 );
+    		            currentGL2.glDrawArrays( GL2.GL_TRIANGLES, 0, p.getTriangleVertexCount() );
+    		            currentGL2.glBindBuffer( GL2.GL_ARRAY_BUFFER, 0 );
     	        	}
     	        }
-	            gl2.glDisableClientState( GL2.GL_VERTEX_ARRAY );
-	            gl2.glEnable(GL2.GL_MULTISAMPLE);
-	            gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
+	            currentGL2.glDisableClientState( GL2.GL_VERTEX_ARRAY );
+	            currentGL2.glEnable(GL2.GL_MULTISAMPLE);
+	            currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
             }
         }
         canvas.swapBuffers();   // DB
-        gl2.glGetFloatv(GL2.GL_PROJECTION_MATRIX, projectionMatrix, 0);
-        gl2.glGetIntegerv(GL2.GL_VIEWPORT, viewPort, 0);
+        currentGL2.glGetFloatv(GL2.GL_PROJECTION_MATRIX, projectionMatrix, 0);
+        currentGL2.glGetIntegerv(GL2.GL_VIEWPORT, viewPort, 0);
         glcontext.release();
         drawingTime = System.nanoTime()-t0;
         //System.out.println(drawingTime);    // DB
-        int glerror = gl2.glGetError(); 
+        int glerror = currentGL2.glGetError(); 
         if (glerror != 0)
         	System.out.println("[LDrawGLDisplay] " + Integer.toHexString(glerror));
 	}
@@ -1116,20 +1177,16 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 			return;
 		glcontext.makeCurrent();
 		for (LDRenderedPart p : model.values()) {
-			delRenderedPartVA(p);
+			delRenderedPartVA(p, currentGL2);
 		}
 		glcontext.release();
 		model.clear();
 	}
 
 	
-	@Override
-	public void init(GLAutoDrawable drawable) {
+	
+	private void initScene(GL2 gl2) {
 		
-		glcontext = drawable.getContext();
-		glcontext.makeCurrent();
-		
-		gl2 = drawable.getGL().getGL2();
 		gl2.glMatrixMode(GL2.GL_MODELVIEW);
         gl2.glLightfv(GL2.GL_LIGHT1, GL2.GL_POSITION, new float[] {5f,-9f,-10f,0f}, 0);
         gl2.glLightfv(GL2.GL_LIGHT1, GL2.GL_AMBIENT,new float[] { 0.2f, 0.2f, 0.2f, 1f },0);
@@ -1162,7 +1219,20 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
     		gl2.glGenRenderbuffers(2, rbo, 0);
             createSelectionFBO();
         }
-        int glerror = gl2.glGetError(); 
+
+	}
+	
+	
+	
+	@Override
+	public void init(GLAutoDrawable drawable) {
+		
+		glcontext = drawable.getContext();
+		glcontext.makeCurrent();
+		
+		currentGL2 = drawable.getGL().getGL2();
+		initScene(currentGL2);
+        int glerror = currentGL2.glGetError(); 
         if (glerror != 0)
         	System.out.println("[LDrawGLInit] " + Integer.toHexString(glerror));
         glu = new GLU(); 
@@ -1171,6 +1241,8 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		enableMouseTracking();
  	}
 
+	
+	
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width,
 			int height) {
@@ -1178,12 +1250,12 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		if (isSelectionEnabled()) {
 			// reshape FBO and render buffers
 			// render buffers don't need to be deleted to reshape
-			gl2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
-			gl2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_DEPTH_COMPONENT, 
+			currentGL2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
+			currentGL2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_DEPTH_COMPONENT, 
 					canvas.getWidth(), canvas.getHeight());
 				
-			gl2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
-			gl2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_RGBA8, 
+			currentGL2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
+			currentGL2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_RGBA8, 
 					canvas.getWidth(), canvas.getHeight());			
 		}
 		canvas.repaint(); 
@@ -1203,18 +1275,18 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	 */
 	private void createSelectionFBO() {
 		
-		gl2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
-		gl2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_DEPTH_COMPONENT, 
+		currentGL2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
+		currentGL2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_DEPTH_COMPONENT, 
 				canvas.getWidth(), canvas.getHeight());
 			
-		gl2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
-		gl2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_RGBA8, 
+		currentGL2.glBindRenderbuffer(GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
+		currentGL2.glRenderbufferStorage(GL2.GL_RENDERBUFFER, GL2.GL_RGBA8, 
 				canvas.getWidth(), canvas.getHeight());
 
-		gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
+		currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
 
-		gl2.glFramebufferRenderbuffer(GL2.GL_FRAMEBUFFER, GL2.GL_COLOR_ATTACHMENT0, GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
-		gl2.glFramebufferRenderbuffer(GL2.GL_FRAMEBUFFER, GL2.GL_DEPTH_ATTACHMENT, GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
+		currentGL2.glFramebufferRenderbuffer(GL2.GL_FRAMEBUFFER, GL2.GL_COLOR_ATTACHMENT0, GL2.GL_RENDERBUFFER, rbo[COLOR_RB]);
+		currentGL2.glFramebufferRenderbuffer(GL2.GL_FRAMEBUFFER, GL2.GL_DEPTH_ATTACHMENT, GL2.GL_RENDERBUFFER, rbo[DEPTH_RB]);
 		
 	}
 	
@@ -1233,9 +1305,9 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	public BufferedImage getScreenShot() {
 		
 		glcontext.makeCurrent();
-		render(glcontext.getGLDrawable());
 		int w = glcontext.getGLDrawable().getSurfaceWidth();
 		int h = glcontext.getGLDrawable().getSurfaceHeight();
+		renderScene(glcontext.getGL().getGL2(), glu, w, h);
 		// with this setting on OSX Mavericks images are broken: use no alpha channel
 //		BufferedImage image = new BufferedImage(w,h, BufferedImage.TYPE_INT_ARGB);
 		BufferedImage image = new BufferedImage(w,h, BufferedImage.TYPE_3BYTE_BGR);
@@ -1254,6 +1326,59 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	    image = op.filter(image, null);
 		return image;
 	}
+	
+	
+	
+	public BufferedImage getStaticImage(int sizex, int sizey) {
+		
+		GLDrawableFactory fac = GLDrawableFactory.getFactory(GLProfile.getGL2ES1());
+		GLCapabilities glCap = new GLCapabilities(GLProfile.getGL2ES1());
+		// Without line below, there is an error in Windows.
+		glCap.setDoubleBuffered(false);
+		//makes a new buffer
+		GLOffscreenAutoDrawable buf = fac.createOffscreenAutoDrawable(null, glCap, null, sizex, sizey);
+		//required for drawing to the buffer
+		GLContext context =  buf.createContext(null); 
+		context.makeCurrent();
+		GL2 localGl2 = context.getGL().getGL2();
+		//System.out.println("disegno");
+		localGl2.glViewport(0, 0, sizex, sizey);
+		initScene(localGl2);
+        bufferOk = true;
+		updateSceneObjects(localGl2);
+		renderScene(localGl2, new GLU(),sizex, sizey);
+		//gl2.glFinish();
+		//System.out.println("catturo");
+		// not working on Mavericks 10.9.x
+		//AWTGLReadBufferUtil agb = new AWTGLReadBufferUtil(buf.getGLProfile(), true);
+		//BufferedImage image = agb.readPixelsToBufferedImage(context.getGL(), true);
+		BufferedImage image = new BufferedImage(sizex,sizey, BufferedImage.TYPE_3BYTE_BGR);
+		DataBufferByte awfulBufferBack = (DataBufferByte) image.getRaster().getDataBuffer();
+		Buffer b = ByteBuffer.wrap(awfulBufferBack.getData());
+		localGl2.glPixelStorei(GL2.GL_PACK_ALIGNMENT, 1);
+		// broken images on OSX Mavericks if alpha channel is included
+//		glcontext.getGL().getGL2().glReadPixels(0, 0, w, h, GL2.GL_BGRA, GL2.GL_UNSIGNED_INT_8_8_8_8_REV, b);
+		localGl2.glReadPixels(0, 0, sizex, sizey, GL2.GL_BGR, GL2.GL_UNSIGNED_BYTE, b);
+		clearAllParts();updateSceneObjects(localGl2);
+		context.release();
+
+		//System.out.println(image.toString());
+		context.destroy();
+		buf.destroy();
+		// flip vertical
+		AffineTransform tx = AffineTransform.getScaleInstance(1, -1);
+	    tx.translate(0,-image.getHeight());
+	    AffineTransformOp op = new AffineTransformOp(tx,
+	        AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+	    image = op.filter(image, null);
+        return image;
+	}
+
+
+
+	
+	
+	
 	
 	/* 
 	 * Doesn't work in OSX Mavericks. Probably a bug in AWT.
@@ -1367,11 +1492,11 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 			int clickedX = e.getX();
 			int clickedY = canvas.getHeight()-e.getY();
 			
-			gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
+			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
 			ByteBuffer b = ByteBuffer.allocateDirect(4);
 			b.order(ByteOrder.nativeOrder());
-			gl2.glReadPixels(clickedX, clickedY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
-			gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
+			currentGL2.glReadPixels(clickedX, clickedY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
+			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
 			int selectedId = (int) (b.get(0)&0xff)*65536+(int)(b.get(1)&0xff)*256+(int)(b.get(2)&0xff);
 			glcontext.release();
 			// test view to world coordinates
@@ -1520,12 +1645,12 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		// for part hover highlighting
 //		if (glcontext != null) {
 			glcontext.makeCurrent();
-			gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
+			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
 			ByteBuffer b = ByteBuffer.allocateDirect(4);
 			b.order(ByteOrder.nativeOrder());
-			gl2.glReadPixels(posX, posY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
+			currentGL2.glReadPixels(posX, posY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
 			partHoverId = (int) (b.get(0)&0xff)*65536+(int)(b.get(1)&0xff)*256+(int)(b.get(2)&0xff);
-			gl2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
+			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
 			glcontext.release();
 //		}
 		//System.out.println("x="+pos[6]+" y="+pos[7]+" z="+pos[8]);
