@@ -163,7 +163,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		try {
 			GLProfile glp = GLProfile.getDefault();
 			if (!glp.isGL2()) {
-				throw new LDrawException(LDrawGLDisplay.class,"Your graphic card doesn't support requested OpenGL level.");
+				throw new LDrawException(LDrawGLDisplay.class,"Your graphic card doesn't support requested OpenGL level.\nYour GL is:"+glp.getName());
 			}
 			GLCapabilities caps = new GLCapabilities(glp);
 			if (isAntialias()) {
@@ -772,7 +772,8 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
         	gl2.glHint(GL2.GL_LINE_SMOOTH_HINT, GL2.GL_FASTEST);
         }
         gl2.glClearColor(0.95f, 0.95f, 0.95f, 1f);    // This Will Clear The Background Color
-        gl2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
+        gl2.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT |
+        		GL2.GL_ACCUM_BUFFER_BIT);    // Clear The Screen And The Depth Buffer
         gl2.glColorMaterial( GL2.GL_FRONT_AND_BACK, GL2.GL_AMBIENT_AND_DIFFUSE );
         gl2.glDisable(GL2.GL_LIGHTING);
         
@@ -1328,13 +1329,29 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	}
 	
 	
-	
+	/**
+	 * Generate an image from off-screen framebuffer
+	 * 
+	 * Use current view matrix, projection and zoom factor
+	 * 
+	 * @param sizex width in pixel
+	 * @param sizey height in pixel
+	 * @return static image
+	 */
 	public BufferedImage getStaticImage(int sizex, int sizey) {
 		
-		GLDrawableFactory fac = GLDrawableFactory.getFactory(GLProfile.getGL2ES1());
-		GLCapabilities glCap = new GLCapabilities(GLProfile.getGL2ES1());
+		GLDrawableFactory fac = GLDrawableFactory.getFactory(GLProfile.getDefault());
+		GLCapabilities glCap = new GLCapabilities(GLProfile.getDefault());
 		// Without line below, there is an error in Windows.
 		glCap.setDoubleBuffered(false);
+//		glCap.setOnscreen(false);
+//		glCap.setFBO(true);
+		if (isAntialias()) {
+//			glCap.setAlphaBits(4);
+			glCap.setSampleBuffers(true);
+			glCap.setNumSamples(8);
+//			System.out.println("s:"+glCap.getNumSamples()+" SB:"+glCap.getSampleBuffers());
+		}
 		//makes a new buffer
 		GLOffscreenAutoDrawable buf = fac.createOffscreenAutoDrawable(null, glCap, null, sizex, sizey);
 		//required for drawing to the buffer
@@ -1342,12 +1359,15 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		context.makeCurrent();
 		GL2 localGl2 = context.getGL().getGL2();
 		//System.out.println("disegno");
+//		localGl2.glDrawBuffer(GL2.GL_BACK);
+//		localGl2.glReadBuffer(GL2.GL_BACK);
 		localGl2.glViewport(0, 0, sizex, sizey);
+		//localGl2.glDrawBuffer(GL2.GL_FRONT_AND_BACK);
 		initScene(localGl2);
         bufferOk = true;
 		updateSceneObjects(localGl2);
 		renderScene(localGl2, new GLU(),sizex, sizey);
-		//gl2.glFinish();
+		buf.swapBuffers();
 		//System.out.println("catturo");
 		// not working on Mavericks 10.9.x
 		//AWTGLReadBufferUtil agb = new AWTGLReadBufferUtil(buf.getGLProfile(), true);
@@ -1359,7 +1379,7 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		// broken images on OSX Mavericks if alpha channel is included
 //		glcontext.getGL().getGL2().glReadPixels(0, 0, w, h, GL2.GL_BGRA, GL2.GL_UNSIGNED_INT_8_8_8_8_REV, b);
 		localGl2.glReadPixels(0, 0, sizex, sizey, GL2.GL_BGR, GL2.GL_UNSIGNED_BYTE, b);
-		clearAllParts();updateSceneObjects(localGl2);
+		clearAllParts();
 		context.release();
 
 		//System.out.println(image.toString());

@@ -1,3 +1,10 @@
+2016-10-26  Mario Pascucci  <mpascucci@gmail.com>
+
+	* LDrawGLDisplay.java (LDrawGLDisplay): on error report GL level in message
+	(renderScene): added accumulation buffer clear
+	(getStaticImage): better image rendering, with antialias
+	code reorganization to generate better static image woth antialias
+
 2016-10-07  Mario Pascucci  <mpascucci@gmail.com>
 
 	* LDrawGLDisplay.java (getStaticImage): Added off-screen image generator
