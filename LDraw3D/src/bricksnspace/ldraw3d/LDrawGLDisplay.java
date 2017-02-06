@@ -40,6 +40,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -56,7 +58,6 @@ import javax.media.opengl.glu.GLU;
 import bricksnspace.j3dgeom.JSimpleGeom;
 import bricksnspace.j3dgeom.Matrix3D;
 import bricksnspace.j3dgeom.Point3D;
-import bricksnspace.ldrawlib.LDrawException;
 
 import com.jogamp.common.nio.Buffers;
 
@@ -158,25 +159,23 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 	
 	
 	
-	public LDrawGLDisplay() throws LDrawException
+	public LDrawGLDisplay() throws GLException
 	{
-		try {
-			GLProfile glp = GLProfile.getDefault();
-			if (!glp.isGL2()) {
-				throw new LDrawException(LDrawGLDisplay.class,"Your graphic card doesn't support requested OpenGL level.\nYour GL is:"+glp.getName());
-			}
-			GLCapabilities caps = new GLCapabilities(glp);
-			if (isAntialias()) {
-				caps.setSampleBuffers(true);
-				caps.setNumSamples(8);
-			}
-			canvas = new GLCanvas(caps);
-			canvas.setAutoSwapBufferMode(false);
-			canvas.addGLEventListener(this);
+
+		GLProfile glp = GLProfile.getDefault();
+		if (!glp.isGL2()) {
+			GLException ex = new GLException("Your graphic card doesn't support requested OpenGL level.\nYour GL is:"+glp.getName());
+			Logger.getAnonymousLogger().log(Level.SEVERE, "Unsupported OpenGL level", ex);
+			throw ex;
 		}
-		catch (GLException e) {
-			throw new LDrawException(LDrawGLDisplay.class, "OpenGL error", e);
+		GLCapabilities caps = new GLCapabilities(glp);
+		if (isAntialias()) {
+			caps.setSampleBuffers(true);
+			caps.setNumSamples(8);
 		}
+		canvas = new GLCanvas(caps);
+		canvas.setAutoSwapBufferMode(false);
+		canvas.addGLEventListener(this);
 	}
 
 	
