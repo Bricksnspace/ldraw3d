@@ -1,5 +1,5 @@
 /*
-	Copyright 2014 Mario Pascucci <mpascucci@gmail.com>
+	Copyright 2014-2017 Mario Pascucci <mpascucci@gmail.com>
 	This file is part of LDraw3D
 
 	LDraw3D is free software: you can redistribute it and/or modify
@@ -1629,10 +1629,19 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 				(MouseEvent.BUTTON3_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON1_DOWN_MASK)) == 
 				MouseEvent.BUTTON1_DOWN_MASK
 				&& selection) {
-			selcorner2x = e.getX();
-			selcorner2y = e.getY();
-			doSelectByWindow();
-			canvas.repaint();
+			if (partHoverId != 0) {
+				// cursor is over a part
+				for (HandlingListener p:handlingListeners) {
+					p.startDragParts(partHoverId);
+				}
+			}
+			else {
+				// cursor is over "empty" area
+				selcorner2x = e.getX();
+				selcorner2y = e.getY();
+				doSelectByWindow();
+				canvas.repaint();
+			}
 		}
 	}
 
@@ -1663,14 +1672,14 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 		
 		// for part hover highlighting
 //		if (glcontext != null) {
-			glcontext.makeCurrent();
-			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
-			ByteBuffer b = ByteBuffer.allocateDirect(4);
-			b.order(ByteOrder.nativeOrder());
-			currentGL2.glReadPixels(posX, posY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
-			partHoverId = (int) (b.get(0)&0xff)*65536+(int)(b.get(1)&0xff)*256+(int)(b.get(2)&0xff);
-			currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
-			glcontext.release();
+		glcontext.makeCurrent();
+		currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, fbo[0]);
+		ByteBuffer b = ByteBuffer.allocateDirect(4);
+		b.order(ByteOrder.nativeOrder());
+		currentGL2.glReadPixels(posX, posY, 1, 1, GL2.GL_RGB, GL2.GL_UNSIGNED_BYTE, b);
+		partHoverId = (int) (b.get(0)&0xff)*65536+(int)(b.get(1)&0xff)*256+(int)(b.get(2)&0xff);
+		currentGL2.glBindFramebuffer(GL2.GL_FRAMEBUFFER, 0);
+		glcontext.release();
 //		}
 		//System.out.println("x="+pos[6]+" y="+pos[7]+" z="+pos[8]);
 		// calls listeners

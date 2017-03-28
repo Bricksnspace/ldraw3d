@@ -1,3 +1,15 @@
+2017-03-28  Mario Pascucci  <mpascucci@gmail.com>
+
+	* src/bricksnspace/ldraw3d/HandlingListener.java (startDragParts): added code to manage part dragging
+	* src/bricksnspace/ldraw3d/LDrawGLDisplay.java (mouseDragged): added code to manage part dragging
+	* src/bricksnspace/ldraw3d/PartQueryable.java: moved to LDrawLib
+	* src/bricksnspace/ldraw3d/ConnGrid.java: moved to LDrawLib
+	* src/bricksnspace/ldraw3d/ConnectionHandler.java: moved to LDrawLib
+
+2017-03-24  Mario Pascucci  <mpascucci@gmail.com>
+
+	* src/bricksnspace/ldraw3d/LDrawGLDisplay.java (mouseDragged): added code to handle mouse parts drag
+
 2016-10-26  Mario Pascucci  <mpascucci@gmail.com>
 
 	* LDrawGLDisplay.java (LDrawGLDisplay): on error report GL level in message

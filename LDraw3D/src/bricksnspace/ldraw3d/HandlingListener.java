@@ -56,4 +56,12 @@ public interface HandlingListener {
 	 */
 	public void endDragSelectionWindow(); 
 	
+	
+	
+	/**
+	 * Callback for "dragging" parts or group of parts
+	 * @param partId part under cursor, 0 if none
+	 */
+	public void startDragParts(int partId);
+	
 }
