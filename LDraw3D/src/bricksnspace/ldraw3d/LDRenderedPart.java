@@ -23,6 +23,8 @@ package bricksnspace.ldraw3d;
 import java.awt.Color;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import bricksnspace.j3dgeom.Matrix3D;
 import bricksnspace.j3dgeom.Point3D;
@@ -63,7 +65,6 @@ public class LDRenderedPart {
 	private byte[] wireColorVA = null;
 	private byte[] auxWireColorVA = null;
 	
-	//private List<ConnectionPoint> connections = new ArrayList<ConnectionPoint>();
 	
 	private int triangleName;			// VBO names for OpenGL
 	private int triangleColorName;
@@ -376,7 +377,7 @@ public class LDRenderedPart {
 				}
 				else if (prim.getColorIndex() == LDrawColor.EDGE) {
 					// edge color is illegal in sub-part!
-					System.out.println("[LDRenderedPart] Illegal EDGE color in sub-part:\n"+prim.toString());
+					Logger.getGlobal().log(Level.WARNING,"[LDRenderedPart] Illegal EDGE color in sub-part:\n"+prim.toString());
 					localColor = color;
 				}
 				else {
