@@ -214,6 +214,7 @@ public class DrawHelpers {
 
 	public void setGridSize(float size) {
 		gridSize = size;
+		addGrid();
 	}
 
 	
@@ -221,10 +222,8 @@ public class DrawHelpers {
 	public void addGrid() {
 		if (gldisplay == null)
 			throw new IllegalArgumentException("[DrawHelpers.addGrid] No display defined");
-		if (grid == null) {
-			grid = getGrid();
-		}
-		gldisplay.addGadget(getGrid());
+		grid = getGrid();
+		gldisplay.addGadget(grid);
 	}
 
 

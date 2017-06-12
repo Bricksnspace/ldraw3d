@@ -261,6 +261,20 @@ public class LDrawGLDisplay implements GLEventListener, MouseListener, MouseMoti
 			canvas.repaint();	
 	}
 
+	
+	
+	public float getZoomFactor() {
+		
+		return zoomFactor;
+	}
+	
+	
+	
+	public Matrix3D getViewMatrix() {
+		
+		return viewMatrix.moveTo(-offsetx, -offsety, -offsetz);
+	}
+	
 
 	public void setOffsetx(float offsetx) {
 		viewMatrix = viewMatrix.moveTo(-offsetx, 0, 0);

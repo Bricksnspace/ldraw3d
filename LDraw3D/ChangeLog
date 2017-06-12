@@ -1,3 +1,7 @@
+2017-05-31  Mario Pascucci  <mpascucci@gmail.com>
+
+	* src/bricksnspace/ldraw3d/DrawHelpers.java (setGridSize): grid not updated on size change (fixed)
+
 2017-03-28  Mario Pascucci  <mpascucci@gmail.com>
 
 	* src/bricksnspace/ldraw3d/HandlingListener.java (startDragParts): added code to manage part dragging

@@ -12,7 +12,11 @@
 	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-macosx-universal.jar"/>
 	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-windows-amd64.jar"/>
 	<classpathentry exported="true" kind="lib" path="gluegen-rt-natives-windows-i586.jar"/>
-	<classpathentry exported="true" kind="lib" path="gluegen-rt.jar"/>
+	<classpathentry exported="true" kind="lib" path="gluegen-rt.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/home/mario/Documenti/src/git/ldraw3d/LDraw3D/gluegen-javadoc.zip!/gluegen/javadoc"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-android-armv6.jar"/>
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-amd64.jar"/>
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-linux-armv6.jar"/>
@@ -21,6 +25,10 @@
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-macosx-universal.jar"/>
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-windows-amd64.jar"/>
 	<classpathentry exported="true" kind="lib" path="jogl-all-natives-windows-i586.jar"/>
-	<classpathentry exported="true" kind="lib" path="jogl-all.jar"/>
+	<classpathentry exported="true" kind="lib" path="jogl-all.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/home/mario/Documenti/src/git/ldraw3d/LDraw3D/jogl-javadoc.zip!/jogl/javadoc"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
